@@ -1,0 +1,31 @@
+<svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bgHair" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#171A16"/>
+      <stop offset="100%" stop-color="#0A0B0A"/>
+    </linearGradient>
+    <radialGradient id="glowHair" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#5FE042" stop-opacity="0.30"/>
+      <stop offset="100%" stop-color="#5FE042" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bgHair)"/>
+  <circle cx="600" cy="300" r="360" fill="url(#glowHair)"/>
+  <g stroke="#5FE042" stroke-opacity="0.12" stroke-width="1">
+    <line x1="0" y1="120" x2="1200" y2="120"/>
+    <line x1="0" y1="580" x2="1200" y2="580"/>
+  </g>
+  <g fill="#5FE042" fill-opacity="0.55">
+    <circle cx="140" cy="150" r="2.5"/><circle cx="1080" cy="120" r="2"/>
+    <circle cx="980" cy="560" r="2.5"/><circle cx="200" cy="540" r="2"/>
+    <circle cx="1050" cy="330" r="1.6"/><circle cx="90" cy="360" r="1.6"/>
+  </g>
+  <circle cx="600" cy="290" r="86" fill="none" stroke="#5FE042" stroke-opacity="0.35" stroke-width="1.5"/>
+  <g transform="translate(560,250)" stroke="#5FE042" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <circle cx="6" cy="6" r="6"/>
+    <circle cx="6" cy="34" r="6"/>
+    <path d="M46 0L15.5 26M15.5 14L46 40"/>
+  </g>
+  <text x="600" y="450" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-size="34" fill="#F6F7F2">Hair</text>
+  <text x="600" y="486" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" letter-spacing="2.5" fill="#8B928A">PHOTO PLACEHOLDER · REPLACE WITH assets/pricing_hair.png</text>
+</svg>
