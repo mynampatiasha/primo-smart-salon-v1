@@ -1,0 +1,11 @@
+name = "primo-face-analyser"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+AI_PROVIDER = "xai"          # Grok. Or "anthropic" / "openai"
+ALLOWED_ORIGINS = "https://mynampatiasha.github.io,http://localhost:8000"
+# AI_MODEL = "grok-4.7"   # optional override
+
+# The API key is a SECRET — never put it here:
+#   npx wrangler secret put XAI_API_KEY
