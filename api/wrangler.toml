@@ -1,0 +1,11 @@
+name = "primo-face-analyser"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+AI_PROVIDER = "anthropic"
+ALLOWED_ORIGINS = "https://mynampatiasha.github.io,http://localhost:8000"
+# AI_MODEL = "claude-haiku-5-5"   # optional override
+
+# The API key is a SECRET — never put it here:
+#   npx wrangler secret put ANTHROPIC_API_KEY
