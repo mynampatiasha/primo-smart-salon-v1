@@ -4,12 +4,22 @@ The site is static (GitHub Pages), so the AI key lives here instead of in the br
 The Worker receives the photo, asks a vision model for cosmetic suggestions, keeps only
 services listed in `../services-catalog.js`, and returns them. Photos are never stored or logged.
 
-## Deploy (one time, ~5 min)
-1. Get an API key: https://console.anthropic.com (or set `AI_PROVIDER = "openai"` and use an OpenAI key).
+## Easiest: deploy from the Cloudflare website (no install)
+1. https://dash.cloudflare.com → sign up / log in → **Workers & Pages** → **Create** → **Create Worker** → name it `primo-face-analyser` → **Deploy**.
+2. **Edit code** → delete everything → paste the whole of `api/worker.bundle.js` → **Deploy**.
+3. Worker → **Settings → Variables and Secrets** → add:
+   - `XAI_API_KEY` — type **Secret** — your Grok key
+   - `AI_PROVIDER` — Text — `xai`
+   - `ALLOWED_ORIGINS` — Text — `https://mynampatiasha.github.io`
+4. Copy the Worker URL (`https://primo-face-analyser.<you>.workers.dev`) into
+   `face-analyser.html` → `window.PRIMO_ANALYZER_ENDPOINT`.
+
+## Or deploy with the CLI
+1. Get a Grok API key at https://console.x.ai (API Keys). Anthropic/OpenAI also work: change `AI_PROVIDER` in `wrangler.toml`.
 2. From this `api/` folder:
    ```bash
    npx wrangler login
-   npx wrangler secret put ANTHROPIC_API_KEY
+   npx wrangler secret put XAI_API_KEY      # paste the key when asked
    npx wrangler deploy
    ```
 3. Copy the URL it prints (e.g. `https://primo-face-analyser.<you>.workers.dev`) into

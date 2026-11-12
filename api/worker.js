@@ -11,8 +11,8 @@
    and is never written to storage, KV, logs or cache.
 
    Env (set in Cloudflare dashboard or wrangler secrets):
-     AI_PROVIDER      "anthropic" (default) | "openai"
-     ANTHROPIC_API_KEY / OPENAI_API_KEY   (secret)
+     AI_PROVIDER      "xai" (Grok) | "anthropic" | "openai"
+     XAI_API_KEY / ANTHROPIC_API_KEY / OPENAI_API_KEY   (secret)
      AI_MODEL         optional override
      ALLOWED_ORIGINS  comma list, e.g.
                       https://mynampatiasha.github.io,http://localhost:8000
@@ -28,7 +28,11 @@ const MAX_NOTE = 200;
 const MAX_RECS = 5;
 const AI_TIMEOUT_MS = 30_000;
 
-const DEFAULT_MODELS = { anthropic: "claude-haiku-5-5", openai: "gpt-4.1-mini" };
+const DEFAULT_MODELS = { anthropic: "claude-haiku-5-5", openai: "gpt-4.1-mini", xai: "grok-4.7" };
+const OPENAI_COMPATIBLE = {
+  openai: { url: "https://api.openai.com/v1/chat/completions", keyName: "OPENAI_API_KEY" },
+  xai:    { url: "https://api.x.ai/v1/chat/completions",       keyName: "XAI_API_KEY" }
+};
 
 /* ---------- prompt ---------- */
 function systemPrompt() {
@@ -116,13 +120,15 @@ async function callAnthropic(env, fetchImpl, image, mediaType, goals, note, sign
   return block.input;
 }
 
-async function callOpenAI(env, fetchImpl, image, mediaType, goals, note, signal) {
-  const res = await fetchImpl("https://api.openai.com/v1/chat/completions", {
+// OpenAI and xAI (Grok) share the same chat-completions format
+async function callOpenAICompatible(provider, env, fetchImpl, image, mediaType, goals, note, signal) {
+  const cfg = OPENAI_COMPATIBLE[provider];
+  const res = await fetchImpl(cfg.url, {
     method: "POST",
     signal,
-    headers: { "content-type": "application/json", authorization: `Bearer ${env.OPENAI_API_KEY}` },
+    headers: { "content-type": "application/json", authorization: `Bearer ${env[cfg.keyName]}` },
     body: JSON.stringify({
-      model: env.AI_MODEL || DEFAULT_MODELS.openai,
+      model: env.AI_MODEL || DEFAULT_MODELS[provider],
       max_tokens: 900,
       tools: [{ type: "function", function: { name: "submit_result", description: "Submit the photo check and service recommendations.", parameters: RESULT_SCHEMA } }],
       tool_choice: { type: "function", function: { name: "submit_result" } },
@@ -135,11 +141,15 @@ async function callOpenAI(env, fetchImpl, image, mediaType, goals, note, signal)
       ]
     })
   });
-  if (!res.ok) throw new Error(`openai_${res.status}`);
+  if (!res.ok) throw new Error(`${provider}_${res.status}`);
   const data = await res.json();
-  const call = data.choices?.[0]?.message?.tool_calls?.[0];
-  if (!call) throw new Error("openai_no_tool_call");
-  return JSON.parse(call.function.arguments);
+  const msg = data.choices?.[0]?.message || {};
+  const call = msg.tool_calls?.[0];
+  if (call) return JSON.parse(call.function.arguments);
+  // fallback: some models answer with plain JSON text instead of a tool call
+  const m = String(msg.content || "").match(/\{[\s\S]*\}/);
+  if (m) return JSON.parse(m[0]);
+  throw new Error(`${provider}_no_result`);
 }
 
 /* ---------- validation: never trust the model's output ---------- */
@@ -217,15 +227,16 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   const goals = (Array.isArray(body.goals) ? body.goals : []).filter(g => GOALS.includes(g));
   const note = String(body.note || "").replace(/[\u0000-\u001f]/g, " ").slice(0, MAX_NOTE).trim();
 
-  const provider = env.AI_PROVIDER === "openai" ? "openai" : "anthropic";
-  const key = provider === "openai" ? env.OPENAI_API_KEY : env.ANTHROPIC_API_KEY;
+  const provider = ["openai", "xai"].includes(env.AI_PROVIDER) ? env.AI_PROVIDER : "anthropic";
+  const key = provider === "anthropic" ? env.ANTHROPIC_API_KEY : env[OPENAI_COMPATIBLE[provider].keyName];
   if (!key) return json({ status: "error", code: "not_configured" }, 503, headers);
 
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), AI_TIMEOUT_MS);
   try {
-    const call = provider === "openai" ? callOpenAI : callAnthropic;
-    const raw = await call(env, fetchImpl, image, mediaType, goals, note, ctrl.signal);
+    const raw = provider === "anthropic"
+      ? await callAnthropic(env, fetchImpl, image, mediaType, goals, note, ctrl.signal)
+      : await callOpenAICompatible(provider, env, fetchImpl, image, mediaType, goals, note, ctrl.signal);
     const result = sanitizeResult(raw, goals);
     return json(result, result.status === "error" ? 502 : 200, headers);
   } catch (err) {
