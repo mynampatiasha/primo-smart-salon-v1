@@ -8,8 +8,8 @@ workers_dev = true
 preview_urls = false
 
 [vars]
-AI_PROVIDER = "xai"
+AI_PROVIDER = "gemini"
 ALLOWED_ORIGINS = "https://mynampatiasha.github.io"
 
-# The Grok key is a SECRET: add it in Cloudflare → this Worker → Settings →
-# Variables and Secrets → XAI_API_KEY (type Secret). Never put it in this file.
+# The Gemini key is a SECRET: add it in Cloudflare → this Worker → Settings →
+# Variables and Secrets → GEMINI_API_KEY (type Secret). Never put it in this file.
