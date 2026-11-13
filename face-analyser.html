@@ -20,7 +20,8 @@
     .loader { border: 5px solid rgba(255,255,255,0.2); border-top: 5px solid #59ff4f; border-radius: 50%; width: 64px; height: 64px; animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
     .mirror { transform: scaleX(-1); }
-    .goal-chip[aria-pressed="true"] { background: #59ff4f; color: #000; border-color: #59ff4f; }
+    .goal-chip[aria-pressed="true"],
+    .goal-chip[aria-pressed="true"]:hover { background: #59ff4f; color: #000; border-color: #59ff4f; }
     .btn-primary { background: #59ff4f; color: #000; font-weight: 700; }
     .btn-primary:hover { background: #4ade80; }
     .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
