@@ -300,7 +300,8 @@
         return;
       }
       if (!res.ok || !data || data.status !== "ok") {
-        showError(ERROR_MESSAGES[data && data.code] || ERROR_MESSAGES.default);
+        const why = (data && (data.detail || data.code)) || `HTTP ${res.status}`;
+        showError((ERROR_MESSAGES[data && data.code] || ERROR_MESSAGES.default) + "  [" + why + "]");
         return;
       }
       state.lastResultKey = key;
