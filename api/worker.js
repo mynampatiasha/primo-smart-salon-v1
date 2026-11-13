@@ -113,7 +113,7 @@ async function callAnthropic(env, fetchImpl, image, mediaType, goals, note, sign
       }]
     })
   });
-  if (!res.ok) throw new Error(`anthropic_${res.status}`);
+  if (!res.ok) throw new Error(`anthropic_${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const block = (data.content || []).find(b => b.type === "tool_use");
   if (!block) throw new Error("anthropic_no_tool_use");
@@ -141,7 +141,7 @@ async function callOpenAICompatible(provider, env, fetchImpl, image, mediaType, 
       ]
     })
   });
-  if (!res.ok) throw new Error(`${provider}_${res.status}`);
+  if (!res.ok) throw new Error(`${provider}_${res.status}: ${(await res.text()).slice(0, 300)}`);
   const data = await res.json();
   const msg = data.choices?.[0]?.message || {};
   const call = msg.tool_calls?.[0];
@@ -238,11 +238,13 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
       ? await callAnthropic(env, fetchImpl, image, mediaType, goals, note, ctrl.signal)
       : await callOpenAICompatible(provider, env, fetchImpl, image, mediaType, goals, note, ctrl.signal);
     const result = sanitizeResult(raw, goals);
+    if (result.status === "error") result.detail = "model returned no valid services: " + JSON.stringify(raw).slice(0, 200);
     return json(result, result.status === "error" ? 502 : 200, headers);
   } catch (err) {
     // log the error code only — never the request body/photo
-    console.log("analysis_failed", String(err && err.message || err).slice(0, 80));
-    return json({ status: "error", code: ctrl.signal.aborted ? "timeout" : "ai_failed" }, 502, headers);
+    const detail = String(err && err.message || err).slice(0, 300);
+    console.log("analysis_failed", detail);
+    return json({ status: "error", code: ctrl.signal.aborted ? "timeout" : "ai_failed", detail }, 502, headers);
   } finally {
     clearTimeout(timer);
   }
