@@ -297,7 +297,7 @@ var MAX_IMAGE_B64 = 2e6;
 var MAX_NOTE = 200;
 var MAX_RECS = 5;
 var AI_TIMEOUT_MS = 3e4;
-var DEFAULT_MODELS = { anthropic: "claude-haiku-5-5", openai: "gpt-4.1-mini", xai: "grok-4.7" };
+var DEFAULT_MODELS = { anthropic: "claude-haiku-5-5", openai: "gpt-4.1-mini", xai: "grok-4.7", gemini: "gemini-flash-latest" };
 var OPENAI_COMPATIBLE = {
   openai: { url: "https://api.openai.com/v1/chat/completions", keyName: "OPENAI_API_KEY" },
   xai: { url: "https://api.x.ai/v1/chat/completions", keyName: "XAI_API_KEY" }
@@ -411,6 +411,35 @@ async function callOpenAICompatible(provider, env, fetchImpl, image, mediaType, 
   if (m) return JSON.parse(m[0]);
   throw new Error(`${provider}_no_result`);
 }
+async function callGemini(env, fetchImpl, image, mediaType, goals, note, signal) {
+  const model = env.AI_MODEL || DEFAULT_MODELS.gemini;
+  const shape = `Reply with ONLY a JSON object, no other text, in exactly this shape:
+{"photo_ok": true|false,
+ "photo_issue": one of ${JSON.stringify(PHOTO_ISSUES)},
+ "observations": [up to 4 short strings],
+ "recommendations": [{"service_id": one of the menu ids, "reason": "one short sentence", "basis": "photo"|"goal"|"both"}]}`;
+  const res = await fetchImpl(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+    method: "POST",
+    signal,
+    headers: { "content-type": "application/json", "x-goog-api-key": env.GEMINI_API_KEY },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: systemPrompt() + "\n\n" + shape }] },
+      contents: [{ role: "user", parts: [
+        { inline_data: { mime_type: mediaType, data: image } },
+        { text: userPrompt(goals, note).replace("submit your result with the tool", "reply with the JSON object") }
+      ] }],
+      generationConfig: { responseMimeType: "application/json", temperature: 0.4, maxOutputTokens: 4096 }
+    })
+  });
+  if (!res.ok) throw new Error(`gemini_${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const data = await res.json();
+  if (data.promptFeedback?.blockReason) throw new Error(`gemini_blocked: ${data.promptFeedback.blockReason}`);
+  const cand = data.candidates?.[0];
+  const text = (cand?.content?.parts || []).map((p) => p.text || "").join("");
+  const m = text.match(/\{[\s\S]*\}/);
+  if (!m) throw new Error(`gemini_no_json: finish=${cand?.finishReason || "none"}`);
+  return JSON.parse(m[0]);
+}
 function sanitizeResult(raw, goals) {
   const issue = PHOTO_ISSUES.includes(raw?.photo_issue) ? raw.photo_issue : "none";
   if (!raw || raw.photo_ok !== true || issue !== "none") {
@@ -475,13 +504,13 @@ async function handleRequest(request, env, fetchImpl = fetch) {
   }
   const goals = (Array.isArray(body.goals) ? body.goals : []).filter((g) => GOALS.includes(g));
   const note = String(body.note || "").replace(/[\u0000-\u001f]/g, " ").slice(0, MAX_NOTE).trim();
-  const provider = ["openai", "xai"].includes(env.AI_PROVIDER) ? env.AI_PROVIDER : "anthropic";
-  const key = provider === "anthropic" ? env.ANTHROPIC_API_KEY : env[OPENAI_COMPATIBLE[provider].keyName];
+  const provider = ["openai", "xai", "gemini"].includes(env.AI_PROVIDER) ? env.AI_PROVIDER : "anthropic";
+  const key = provider === "anthropic" ? env.ANTHROPIC_API_KEY : provider === "gemini" ? env.GEMINI_API_KEY : env[OPENAI_COMPATIBLE[provider].keyName];
   if (!key) return json({ status: "error", code: "not_configured" }, 503, headers);
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), AI_TIMEOUT_MS);
   try {
-    const raw = provider === "anthropic" ? await callAnthropic(env, fetchImpl, image, mediaType, goals, note, ctrl.signal) : await callOpenAICompatible(provider, env, fetchImpl, image, mediaType, goals, note, ctrl.signal);
+    const raw = provider === "anthropic" ? await callAnthropic(env, fetchImpl, image, mediaType, goals, note, ctrl.signal) : provider === "gemini" ? await callGemini(env, fetchImpl, image, mediaType, goals, note, ctrl.signal) : await callOpenAICompatible(provider, env, fetchImpl, image, mediaType, goals, note, ctrl.signal);
     const result = sanitizeResult(raw, goals);
     if (result.status === "error") result.detail = "model returned no valid services: " + JSON.stringify(raw).slice(0, 200);
     return json(result, result.status === "error" ? 502 : 200, headers);
