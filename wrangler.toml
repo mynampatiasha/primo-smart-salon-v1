@@ -1,7 +1,7 @@
 # Cloudflare Worker for the Face Analyser (AI proxy).
 # Cloudflare builds this automatically from GitHub (Workers Builds).
 # The website itself is still served by GitHub Pages; this only deploys api/worker.js.
-name = "primo-smart-salon-v1"
+name = "primo-smart-salon"
 main = "api/worker.js"
 compatibility_date = "2026-11-01"
 workers_dev = true
