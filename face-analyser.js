@@ -25,7 +25,7 @@
     cameraControls: $("cameraControls"), preview: $("preview"),
     uploadInput: $("uploadInput"), cameraFallbackInput: $("cameraFallbackInput"),
     photoActionsEmpty: $("photoActionsEmpty"), photoActionsFilled: $("photoActionsFilled"),
-    photoMessage: $("photoMessage"), goalChips: $("goalChips"), goalNote: $("goalNote"),
+    photoMessage: $("photoMessage"), goalChips: $("goalChips"), analyzeSection: $("analyzeSection"),
     consent: $("consent"), btnAnalyze: $("btnAnalyze"), analyzeHint: $("analyzeHint"),
     loading: $("loading"), errorBox: $("errorBox"), errorText: $("errorText"),
     results: $("results"), staleBanner: $("staleBanner"), observations: $("observations"),
@@ -45,7 +45,7 @@
   const show = (node, on = true) => { node.hidden = !on; };
   const selectedGoals = () =>
     [...el.goalChips.querySelectorAll('.goal-chip[aria-pressed="true"]')].map(b => b.dataset.goal);
-  const currentKey = () => `${state.photoSeq}|${selectedGoals().join(",")}|${el.goalNote.value.trim()}`;
+  const currentKey = () => `${state.photoSeq}|${selectedGoals().join(",")}`;
 
   function photoMessage(text) {
     el.photoMessage.textContent = text || "";
@@ -56,9 +56,8 @@
     const ready = !!state.photo && state.photo.quality.ok && el.consent.checked && !state.busy;
     el.btnAnalyze.disabled = !ready;
     let hint = "";
-    if (!state.photo) hint = "Add a photo and tick the box to continue.";
-    else if (!state.photo.quality.ok) hint = "Please retake or replace the photo first.";
-    else if (!el.consent.checked) hint = "Tick the box above to continue.";
+    if (state.photo && !state.photo.quality.ok) hint = "Please retake or change the photo first.";
+    else if (state.photo && !el.consent.checked) hint = "Tick the box above to continue.";
     el.analyzeHint.textContent = hint;
     show(el.analyzeHint, !!hint);
 
@@ -76,6 +75,7 @@
     show(el.photoActionsEmpty, mode !== "camera" && !state.photo);
     show(el.photoActionsFilled, mode !== "camera" && !!state.photo);
     show($("cameraHint"), mode === "camera");
+    show(el.analyzeSection, mode !== "camera" && !!state.photo);
   }
 
   /* ---------------- photo quality ---------------- */
@@ -251,7 +251,6 @@
     state.busy = on;
     show(el.loading, on);
     document.querySelectorAll("#photoActionsFilled button, #goalChips button").forEach(b => { b.disabled = on; });
-    el.goalNote.disabled = on;
     refreshAnalyzeButton();
   }
 
@@ -284,7 +283,7 @@
       const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image, mediaType: "image/jpeg", goals: selectedGoals(), note: el.goalNote.value.trim() }),
+        body: JSON.stringify({ image, mediaType: "image/jpeg", goals: selectedGoals() }),
         signal: ctrl.signal,
         credentials: "omit",
         cache: "no-store"
@@ -320,37 +319,30 @@
   }
 
   /* ---------------- results ---------------- */
-  const BASIS_LABEL = { photo: "From your photo", goal: "From your goal", both: "Photo + your goal" };
 
   function renderResults(data) {
-    el.observations.replaceChildren(...(data.observations.length ? data.observations : ["Your photo looks great for analysis."]).map(t => {
+    el.observations.replaceChildren(...(data.observations.length ? data.observations : ["Looking great!"]).map(t => {
       const d = document.createElement("div");
-      d.className = "bg-[#59ff4f]/10 border border-[#59ff4f]/40 px-4 py-2 rounded-full";
+      d.className = "bg-[#59ff4f]/10 border border-[#59ff4f]/30 px-3 py-1 rounded-full text-sm text-gray-200";
       d.textContent = t;
       return d;
     }));
 
-    el.recommendations.replaceChildren(...data.recommendations.map(r => {
+    el.recommendations.replaceChildren(...data.recommendations.map((r, i) => {
       const card = document.createElement("label");
-      card.className = "glass rounded-2xl p-5 flex gap-4 items-start cursor-pointer border border-[#59ff4f]/20 hover:border-[#59ff4f]/60 transition";
+      card.className = "pick glass rounded-2xl p-5 flex gap-4 items-start cursor-pointer border border-white/10 rise";
+      card.style.animationDelay = (i * 80) + "ms";
       card.dataset.serviceId = r.id;
 
       const cb = document.createElement("input");
       cb.type = "checkbox"; cb.checked = true; cb.className = "mt-1 w-5 h-5 accent-[#59ff4f] shrink-0";
-      cb.dataset.name = r.name; cb.dataset.price = r.price;
+      cb.dataset.name = r.name;
       cb.addEventListener("change", updateBookLink);
 
       const body = document.createElement("div");
-      body.className = "flex-1";
-      const top = document.createElement("div");
-      top.className = "flex justify-between gap-3 items-baseline";
       const name = document.createElement("h3"); name.className = "text-xl font-bold"; name.textContent = r.name;
-      const price = document.createElement("span"); price.className = "text-[#59ff4f] font-bold whitespace-nowrap"; price.textContent = r.price;
-      top.append(name, price);
       const reason = document.createElement("p"); reason.className = "text-gray-300 mt-1"; reason.textContent = r.reason;
-      const tag = document.createElement("span"); tag.className = "inline-block mt-3 text-xs uppercase tracking-wider text-gray-400 border border-white/20 rounded-full px-3 py-1";
-      tag.textContent = BASIS_LABEL[r.basis] || BASIS_LABEL.photo;
-      body.append(top, reason, tag);
+      body.append(name, reason);
       card.append(cb, body);
       return card;
     }));
@@ -363,8 +355,8 @@
 
   function updateBookLink() {
     const picked = [...el.recommendations.querySelectorAll('input[type="checkbox"]:checked')];
-    const lines = picked.map(cb => `• ${cb.dataset.name} (${cb.dataset.price})`);
-    const text = `Hi Primo! I'd like to book these services suggested by the Face Analyser:\n${lines.join("\n")}\n\nPreferred date/time: `;
+    const lines = picked.map(cb => `• ${cb.dataset.name}`);
+    const text = `Hi Primo! I'd like to book:\n${lines.join("\n")}\n\nPreferred date/time: `;
     el.btnBook.href = `https://wa.me/${WA_NUMBER}?text=${encodeURIComponent(text)}`;
     el.btnBook.classList.toggle("pointer-events-none", !picked.length);
     el.btnBook.classList.toggle("opacity-40", !picked.length);
@@ -396,7 +388,6 @@
   $("btnStartOver").addEventListener("click", startOver);
   el.btnAnalyze.addEventListener("click", analyze);
   el.consent.addEventListener("change", refreshAnalyzeButton);
-  el.goalNote.addEventListener("input", refreshAnalyzeButton);
 
   el.goalChips.addEventListener("click", e => {
     const chip = e.target.closest(".goal-chip");
