@@ -28,7 +28,7 @@ const MAX_NOTE = 200;
 const MAX_RECS = 5;
 const AI_TIMEOUT_MS = 30_000;
 
-const DEFAULT_MODELS = { anthropic: "claude-haiku-5-5", openai: "gpt-4.1-mini", xai: "grok-4.7", gemini: "gemini-flash-latest" };
+const DEFAULT_MODELS = { anthropic: "claude-haiku-5-5", openai: "gpt-4.1-mini", xai: "grok-4.7", gemini: "gemini-flash-lite-latest" };   // fast (~2-7s); "gemini-flash-latest" was too slow (>30s)
 const OPENAI_COMPATIBLE = {
   openai: { url: "https://api.openai.com/v1/chat/completions", keyName: "OPENAI_API_KEY" },
   xai:    { url: "https://api.x.ai/v1/chat/completions",       keyName: "XAI_API_KEY" }
@@ -41,7 +41,7 @@ function systemPrompt() {
     .join("\n");
   return `You are the in-salon style advisor for Primo Smart Salon. You look at ONE customer selfie and suggest optional cosmetic services from the salon menu.
 
-FIRST check the photo. Set photo_ok=false (and give no recommendations) if: no human face is clearly visible (no_face), more than one face (multiple_faces), the face is blurry/out of focus (blurry), too dark to see skin and features (too_dark), washed out by light (overexposed), the face is mostly covered or turned away (face_obscured), or it is a drawing/screenshot/not a real photo (not_a_photo).
+FIRST check the photo. Set photo_ok=false (and give no recommendations) if: no human face is clearly visible (no_face), more than one face (multiple_faces), the face is blurry/out of focus (blurry), too dark to see skin and features (too_dark), washed out by light (overexposed), the face is mostly covered, turned away, or shown only in side profile (face_obscured), or it is a drawing/screenshot/not a real photo (not_a_photo).
 
 If the photo is fine, note 2-4 short, neutral observations of VISIBLE cosmetic features relevant to the menu (e.g. "visible shine on the T-zone", "brows a little uneven in shape", "hair ends look dry", "slightly uneven tone between face and neck"). Then recommend 2-${MAX_RECS} services.
 

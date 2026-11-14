@@ -264,6 +264,7 @@
   const ERROR_MESSAGES = {
     not_configured: "The analyser isn't set up yet. Please try again later or book directly on WhatsApp.",
     timeout: "The analysis took too long. Please check your connection and try again.",
+    busy: "The analyser is busy right now. Please wait a minute and try again.",
     network: "We couldn't reach the analyser. Please check your internet connection and try again.",
     default: "We couldn't analyse your photo this time. Please try again."
   };
@@ -301,7 +302,11 @@
       }
       if (!res.ok || !data || data.status !== "ok") {
         const why = (data && (data.detail || data.code)) || `HTTP ${res.status}`;
-        showError((ERROR_MESSAGES[data && data.code] || ERROR_MESSAGES.default) + "  [" + why + "]");
+        console.warn("Face analyser error:", why);
+        const busy = /_429|RESOURCE_EXHAUSTED|quota/i.test(why);
+        // technical detail only when the page is opened with ?debug
+        const debug = new URLSearchParams(location.search).has("debug") ? "  [" + why + "]" : "";
+        showError((busy ? ERROR_MESSAGES.busy : ERROR_MESSAGES[data && data.code] || ERROR_MESSAGES.default) + debug);
         return;
       }
       state.lastResultKey = key;
