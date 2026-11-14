@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Primo's Face Analyser AI</title>
+  <title>Primo Face Analyser — Find your perfect look</title>
 
   <script src="https://cdn.tailwindcss.com"></script>
 
-  <!-- ===== CONFIG: URL of the deployed api/worker.js (see api/README.md) ===== -->
+  <!-- ===== CONFIG ===== -->
   <script>
     window.PRIMO_ANALYZER_ENDPOINT = "https://primo-smart-salon.ashaasubramanyam.workers.dev";
     window.PRIMO_WHATSAPP_NUMBER = "919966016169";
@@ -15,187 +15,150 @@
   <script src="services-catalog.js"></script>
 
   <style>
-    body { background: #000000; color: white; font-family: Arial, sans-serif; }
+    body { background: #000; color: #fff; font-family: Arial, sans-serif; }
     .glass { background: rgba(255,255,255,0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.1); }
-    .loader { border: 5px solid rgba(255,255,255,0.2); border-top: 5px solid #59ff4f; border-radius: 50%; width: 64px; height: 64px; animation: spin 1s linear infinite; }
+    .glow { position: absolute; inset: auto; width: 420px; height: 420px; border-radius: 50%; background: radial-gradient(circle, rgba(89,255,79,.22), transparent 65%); filter: blur(20px); pointer-events: none; }
+    .loader { border: 4px solid rgba(255,255,255,0.15); border-top: 4px solid #59ff4f; border-radius: 50%; width: 56px; height: 56px; animation: spin 1s linear infinite; }
     @keyframes spin { 100% { transform: rotate(360deg); } }
+    @keyframes rise { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+    .rise { animation: rise .45s ease-out both; }
     .mirror { transform: scaleX(-1); }
+    .btn-primary { background: #59ff4f; color: #000; font-weight: 700; transition: transform .15s, box-shadow .15s; }
+    .btn-primary:hover { box-shadow: 0 0 28px rgba(89,255,79,.45); }
+    .btn-primary:active { transform: scale(.98); }
+    .btn-primary:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+    .btn-ghost { border: 1px solid rgba(255,255,255,.3); transition: border-color .15s, color .15s; }
+    .btn-ghost:hover { border-color: #59ff4f; color: #59ff4f; }
+    .goal-chip { border: 1px solid rgba(255,255,255,.25); transition: all .15s; }
     .goal-chip[aria-pressed="true"],
     .goal-chip[aria-pressed="true"]:hover { background: #59ff4f; color: #000; border-color: #59ff4f; }
-    .btn-primary { background: #59ff4f; color: #000; font-weight: 700; }
-    .btn-primary:hover { background: #4ade80; }
-    .btn-primary:disabled { opacity: .35; cursor: not-allowed; }
-    .btn-ghost { border: 1px solid rgba(255,255,255,.35); }
-    .btn-ghost:hover { border-color: #59ff4f; color: #59ff4f; }
-    .face-guide { position:absolute; left:50%; top:46%; width:58%; aspect-ratio:3/4; transform:translate(-50%,-50%); border:2px dashed rgba(89,255,79,.7); border-radius:50%; pointer-events:none; }
+    .face-guide { position:absolute; left:50%; top:46%; width:58%; aspect-ratio:3/4; transform:translate(-50%,-50%); border:2px dashed rgba(89,255,79,.75); border-radius:50%; pointer-events:none; }
+    .pick { transition: border-color .15s, background .15s; }
+    .pick:has(input:checked) { border-color: rgba(89,255,79,.7); background: rgba(89,255,79,.06); }
     [hidden] { display: none !important; }
   </style>
 </head>
 <body>
+  <!-- background glow, clipped so the page never gets wider than the screen -->
+  <div class="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+    <div class="glow -top-40 -right-40"></div>
+  </div>
 
-  <div class="max-w-7xl mx-auto p-6">
+  <div class="relative max-w-xl mx-auto px-5 pb-16">
 
     <!-- ===== HEADER ===== -->
-    <div class="mt-6 mb-10">
-      <a href="index.html" class="inline-flex items-baseline gap-2 mb-6 hover:opacity-80 transition-opacity">
-        <span class="text-4xl font-bold italic">Primo</span>
-        <span class="text-sm font-bold tracking-widest text-[#59ff4f]">SMART SALON</span>
+    <header class="relative flex items-center justify-between pt-6">
+      <a href="index.html" class="inline-flex items-baseline gap-2 hover:opacity-80">
+        <span class="text-3xl font-bold italic">Primo</span>
+        <span class="text-xs font-bold tracking-widest text-[#59ff4f]">SMART SALON</span>
       </a>
-      <a href="index.html" class="block text-gray-400 hover:text-[#59ff4f] mb-6">&larr; Back to website</a>
-      <h1 class="text-5xl lg:text-7xl font-bold leading-tight">
-        Primo's <span class="text-[#59ff4f]">Face analyser AI</span>
+      <a href="index.html" class="text-gray-400 hover:text-[#59ff4f] text-sm">&larr; Home</a>
+    </header>
+
+    <!-- ===== HERO ===== -->
+    <section class="relative text-center mt-10 mb-8 rise">
+      <span class="inline-block text-xs font-bold tracking-widest text-[#59ff4f] border border-[#59ff4f]/40 rounded-full px-4 py-1 mb-5">FACE ANALYSER</span>
+      <h1 class="text-4xl sm:text-5xl font-bold leading-tight">
+        Discover your <span class="text-[#59ff4f]">perfect look</span>
       </h1>
-      <p class="text-gray-400 mt-4 text-xl lg:text-2xl leading-relaxed max-w-3xl">
-        Take a selfie or upload a photo and tell us what you'd like help with. We'll suggest salon services that suit you &mdash; all optional.
-      </p>
-    </div>
+      <p class="text-gray-400 mt-4 text-lg">Take a selfie and get salon services picked just for you &mdash; in seconds.</p>
+      <div class="flex flex-wrap justify-center gap-2 mt-6 text-sm text-gray-300">
+        <span class="glass rounded-full px-3 py-1">📸 Selfie or upload</span>
+        <span class="glass rounded-full px-3 py-1">⚡ Results in seconds</span>
+        <span class="glass rounded-full px-3 py-1">🔒 Photo never saved</span>
+      </div>
+    </section>
 
-    <div class="grid lg:grid-cols-2 gap-8 items-start">
+    <!-- ===== PHOTO ===== -->
+    <section class="glass rounded-[32px] p-4 border border-[#59ff4f]/25 rise">
+      <div id="stage" class="relative overflow-hidden rounded-[24px] bg-black aspect-[4/5] flex items-center justify-center">
 
-      <!-- ===== PHOTO STAGE ===== -->
-      <div class="glass rounded-[40px] p-5 border border-green-500/30">
-        <div id="stage" class="relative overflow-hidden rounded-[30px] bg-black aspect-[3/4] flex items-center justify-center">
-
-          <!-- empty -->
-          <div id="stageEmpty" class="text-center px-8">
-            <svg width="88" height="88" viewBox="0 0 24 24" fill="none" class="mx-auto mb-5 opacity-70"><circle cx="12" cy="9" r="5" stroke="#59ff4f" stroke-width="1.4"/><path d="M3.5 21c1.4-4 4.7-6 8.5-6s7.1 2 8.5 6" stroke="#59ff4f" stroke-width="1.4" stroke-linecap="round"/></svg>
-            <p class="text-xl font-bold mb-3">For the best suggestions</p>
-            <ul class="text-gray-400 space-y-1 text-left inline-block">
-              <li>&bull; Face a window or bright light</li>
-              <li>&bull; Just you, face straight on</li>
-              <li>&bull; Remove sunglasses, mask or cap</li>
-              <li>&bull; Hold steady so it's sharp</li>
-            </ul>
-          </div>
-
-          <!-- live camera -->
-          <video id="camera" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover" hidden></video>
-          <div id="faceGuide" class="face-guide" hidden></div>
-          <div id="cameraControls" class="absolute bottom-4 left-0 right-0 flex justify-center gap-2 sm:gap-3 px-3 z-10" hidden>
-            <button type="button" id="btnCancelCamera" class="bg-black/70 text-white px-4 sm:px-5 py-3 rounded-full border border-white/20">Cancel</button>
-            <button type="button" id="btnSwitchCamera" class="bg-black/70 text-white px-4 sm:px-5 py-3 rounded-full border border-white/20">Switch</button>
-            <button type="button" id="btnCapture" class="btn-primary px-6 sm:px-8 py-3 rounded-full">Capture</button>
-          </div>
-
-          <!-- preview -->
-          <img id="preview" alt="Your photo preview" class="absolute inset-0 w-full h-full object-cover" hidden />
-          <div class="absolute inset-0 border-2 border-[#59ff4f]/40 rounded-[30px] pointer-events-none"></div>
+        <div id="stageEmpty" class="text-center px-8">
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="none" class="mx-auto mb-4"><circle cx="12" cy="9" r="5" stroke="#59ff4f" stroke-width="1.4"/><path d="M3.5 21c1.4-4 4.7-6 8.5-6s7.1 2 8.5 6" stroke="#59ff4f" stroke-width="1.4" stroke-linecap="round"/></svg>
+          <p class="text-lg font-bold">Face the light, look straight ahead</p>
+          <p class="text-gray-500 text-sm mt-1">No sunglasses, mask or cap</p>
         </div>
+
+        <video id="camera" autoplay playsinline muted class="absolute inset-0 w-full h-full object-cover" hidden></video>
+        <div id="faceGuide" class="face-guide" hidden></div>
+        <div id="cameraControls" class="absolute bottom-4 left-0 right-0 flex justify-center gap-2 px-3 z-10" hidden>
+          <button type="button" id="btnCancelCamera" class="bg-black/70 px-4 py-3 rounded-full border border-white/20">Cancel</button>
+          <button type="button" id="btnSwitchCamera" class="bg-black/70 px-4 py-3 rounded-full border border-white/20">Flip</button>
+          <button type="button" id="btnCapture" class="btn-primary px-7 py-3 rounded-full">Capture</button>
+        </div>
+
+        <img id="preview" alt="Your photo" class="absolute inset-0 w-full h-full object-cover" hidden />
       </div>
 
-      <!-- ===== CONTROLS ===== -->
-      <div class="space-y-6">
+      <input type="file" id="uploadInput" accept="image/*" class="hidden" />
+      <input type="file" id="cameraFallbackInput" accept="image/*" capture="user" class="hidden" />
 
-        <!-- step 1 -->
-        <div class="glass rounded-3xl p-6">
-          <h2 class="text-2xl font-bold mb-4"><span class="text-[#59ff4f]">1.</span> Your photo</h2>
-
-          <input type="file" id="uploadInput" accept="image/*" class="hidden" />
-          <input type="file" id="cameraFallbackInput" accept="image/*" capture="user" class="hidden" />
-
-          <div id="photoActionsEmpty" class="flex flex-col sm:flex-row gap-4">
-            <button type="button" id="btnTakeSelfie" class="btn-primary px-8 py-4 rounded-2xl text-lg">Take a selfie</button>
-            <button type="button" id="btnUpload" class="btn-primary px-8 py-4 rounded-2xl text-lg">Upload photo</button>
-          </div>
-          <p id="cameraHint" class="text-gray-400" hidden>Line your face up inside the oval, then tap <strong class="text-white">Capture</strong>.</p>
-          <div id="photoActionsFilled" class="flex flex-wrap gap-3" hidden>
-            <button type="button" id="btnRetake" class="btn-ghost px-6 py-3 rounded-2xl font-bold">Retake selfie</button>
-            <button type="button" id="btnReplace" class="btn-ghost px-6 py-3 rounded-2xl font-bold">Replace photo</button>
-            <button type="button" id="btnRemove" class="px-6 py-3 rounded-2xl text-gray-400 hover:text-white">Remove photo</button>
-          </div>
-
-          <div id="photoMessage" role="alert" class="mt-4 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 text-yellow-100 px-4 py-3" hidden></div>
+      <div class="mt-4">
+        <div id="photoActionsEmpty" class="grid grid-cols-2 gap-3">
+          <button type="button" id="btnTakeSelfie" class="btn-primary py-4 rounded-2xl text-lg">📸 Take selfie</button>
+          <button type="button" id="btnUpload" class="btn-ghost py-4 rounded-2xl text-lg font-bold">Upload photo</button>
         </div>
-
-        <!-- step 2 -->
-        <div class="glass rounded-3xl p-6">
-          <h2 class="text-2xl font-bold mb-1"><span class="text-[#59ff4f]">2.</span> What would you like help with?</h2>
-          <p class="text-gray-400 mb-4">Optional &mdash; pick any.</p>
-          <div id="goalChips" class="flex flex-wrap gap-3">
-            <button type="button" class="goal-chip btn-ghost px-5 py-2 rounded-full font-bold" data-goal="skincare" aria-pressed="false">Skincare</button>
-            <button type="button" class="goal-chip btn-ghost px-5 py-2 rounded-full font-bold" data-goal="makeup" aria-pressed="false">Makeup / occasion</button>
-            <button type="button" class="goal-chip btn-ghost px-5 py-2 rounded-full font-bold" data-goal="hair" aria-pressed="false">Hair</button>
-            <button type="button" class="goal-chip btn-ghost px-5 py-2 rounded-full font-bold" data-goal="grooming" aria-pressed="false">Grooming &amp; brows</button>
-            <button type="button" class="goal-chip btn-ghost px-5 py-2 rounded-full font-bold" data-goal="full" aria-pressed="false">Full makeover</button>
-          </div>
-          <label for="goalNote" class="block text-gray-400 mt-5 mb-2">Anything else? <span class="text-gray-500">(e.g. "wedding next month")</span></label>
-          <input id="goalNote" type="text" maxlength="200" class="w-full bg-black/60 border border-white/20 rounded-xl px-4 py-3 focus:outline-none focus:border-[#59ff4f]" placeholder="Optional" />
+        <p id="cameraHint" class="text-center text-gray-400" hidden>Fit your face inside the oval, then tap <strong class="text-white">Capture</strong>.</p>
+        <div id="photoActionsFilled" class="flex justify-center gap-3" hidden>
+          <button type="button" id="btnRetake" class="btn-ghost px-5 py-3 rounded-2xl font-bold">Retake</button>
+          <button type="button" id="btnReplace" class="btn-ghost px-5 py-3 rounded-2xl font-bold">Change photo</button>
+          <button type="button" id="btnRemove" class="px-4 py-3 rounded-2xl text-gray-400 hover:text-white">Remove</button>
         </div>
-
-        <!-- step 3 -->
-        <div class="glass rounded-3xl p-6 border border-[#59ff4f]/30">
-          <h2 class="text-2xl font-bold mb-3"><span class="text-[#59ff4f]">3.</span> Analyse</h2>
-          <div class="rounded-2xl bg-white/5 border border-white/10 p-4 text-gray-300 text-sm leading-relaxed">
-            <p class="font-bold text-white mb-1">How your photo is used</p>
-            <ul class="space-y-1">
-              <li>&bull; When you tap Analyse, your photo is sent over an encrypted connection to Google's Gemini AI, only to suggest salon services. Google may use free-service requests to improve its products.</li>
-              <li>&bull; Primo does not save your photo &mdash; not on our servers and not in your browser.</li>
-              <li>&bull; It stays on this page until you remove it or leave, and is never shared with the salon or on WhatsApp.</li>
-              <li>&bull; Suggestions are cosmetic and optional, not medical advice.</li>
-            </ul>
-          </div>
-          <label class="flex items-start gap-3 mt-4 cursor-pointer">
-            <input id="consent" type="checkbox" class="mt-1 w-5 h-5 accent-[#59ff4f]" />
-            <span>I understand and agree to my photo being analysed this way.</span>
-          </label>
-          <button type="button" id="btnAnalyze" class="btn-primary w-full mt-5 px-8 py-5 rounded-2xl text-xl" disabled>Analyse my photo</button>
-          <p id="analyzeHint" class="text-gray-500 text-sm mt-2 text-center">Add a photo and tick the box to continue.</p>
-        </div>
+        <div id="photoMessage" role="alert" class="mt-4 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 text-yellow-100 px-4 py-3 text-center" hidden></div>
       </div>
-    </div>
+    </section>
+
+    <!-- ===== GOALS + ANALYSE (shown once there's a photo) ===== -->
+    <section id="analyzeSection" class="mt-6 rise" hidden>
+      <h2 class="text-xl font-bold mb-3 text-center">What are you looking for?</h2>
+      <div id="goalChips" class="flex flex-wrap justify-center gap-2">
+        <button type="button" class="goal-chip px-4 py-2 rounded-full font-bold" data-goal="skincare" aria-pressed="false">✨ Glowing skin</button>
+        <button type="button" class="goal-chip px-4 py-2 rounded-full font-bold" data-goal="hair" aria-pressed="false">💇 New hair</button>
+        <button type="button" class="goal-chip px-4 py-2 rounded-full font-bold" data-goal="makeup" aria-pressed="false">💄 Party / wedding</button>
+        <button type="button" class="goal-chip px-4 py-2 rounded-full font-bold" data-goal="grooming" aria-pressed="false">🪒 Grooming &amp; brows</button>
+        <button type="button" class="goal-chip px-4 py-2 rounded-full font-bold" data-goal="full" aria-pressed="false">🌟 Full makeover</button>
+      </div>
+
+      <label class="flex items-start gap-3 mt-6 cursor-pointer text-sm text-gray-300">
+        <input id="consent" type="checkbox" class="mt-0.5 w-5 h-5 shrink-0 accent-[#59ff4f]" />
+        <span>I agree my photo is sent securely to Google for analysis, only to find my suggestions. Primo never saves it.</span>
+      </label>
+
+      <button type="button" id="btnAnalyze" class="btn-primary w-full mt-5 py-5 rounded-2xl text-xl" disabled>✨ Show my perfect look</button>
+      <p id="analyzeHint" class="text-gray-500 text-sm mt-2 text-center"></p>
+    </section>
 
     <!-- ===== LOADING ===== -->
-    <div id="loading" class="mt-12 flex flex-col items-center" hidden aria-live="polite">
+    <div id="loading" class="mt-10 flex flex-col items-center" hidden aria-live="polite">
       <div class="loader"></div>
-      <p class="mt-6 text-2xl text-[#59ff4f] font-bold">Analysing your photo&hellip;</p>
-      <p class="text-gray-400 mt-1">This usually takes a few seconds.</p>
+      <p class="mt-5 text-xl text-[#59ff4f] font-bold">Finding your perfect look&hellip;</p>
     </div>
 
     <!-- ===== ERROR ===== -->
-    <div id="errorBox" class="mt-12 glass rounded-3xl p-6 border border-red-400/40 text-center" hidden role="alert">
-      <p class="text-2xl font-bold mb-2">Something went wrong</p>
+    <div id="errorBox" class="mt-10 glass rounded-3xl p-6 border border-red-400/40 text-center" hidden role="alert">
+      <p class="text-xl font-bold mb-2">Oops, let's try that again</p>
       <p id="errorText" class="text-gray-300 mb-5"></p>
       <div class="flex flex-wrap justify-center gap-3">
-        <button type="button" id="btnRetry" class="btn-primary px-8 py-3 rounded-2xl">Try again</button>
-        <button type="button" id="btnErrorNewPhoto" class="btn-ghost px-8 py-3 rounded-2xl font-bold">Use a different photo</button>
+        <button type="button" id="btnRetry" class="btn-primary px-7 py-3 rounded-2xl">Try again</button>
+        <button type="button" id="btnErrorNewPhoto" class="btn-ghost px-7 py-3 rounded-2xl font-bold">Different photo</button>
       </div>
     </div>
 
     <!-- ===== RESULTS ===== -->
-    <div id="results" class="mt-12" hidden>
-      <div id="staleBanner" class="mb-6 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 text-yellow-100 px-4 py-3 text-center" hidden>
-        Your photo or goals changed &mdash; tap <strong>Analyse my photo</strong> to update these suggestions.
+    <section id="results" class="mt-10 rise" hidden>
+      <div id="staleBanner" class="mb-5 rounded-2xl border border-yellow-400/40 bg-yellow-400/10 text-yellow-100 px-4 py-3 text-center text-sm" hidden>
+        You changed your photo or choices &mdash; tap <strong>Show my perfect look</strong> again.
       </div>
 
-      <div id="resultsBody">
-        <div class="glass rounded-3xl p-6 mb-6">
-          <h2 class="text-3xl font-bold mb-4">What we noticed</h2>
-          <div id="observations" class="flex flex-wrap gap-3"></div>
-        </div>
+      <h2 class="text-3xl font-bold text-center">Your <span class="text-[#59ff4f]">perfect picks</span></h2>
+      <div id="observations" class="flex flex-wrap justify-center gap-2 mt-4"></div>
 
-        <div class="glass rounded-3xl p-6 border border-[#59ff4f]/30">
-          <h2 class="text-3xl font-bold mb-1 text-[#59ff4f]">Suggested for you</h2>
-          <p class="text-gray-400 mb-6">Untick anything you don't want, then book on WhatsApp.</p>
-          <div id="recommendations" class="grid md:grid-cols-2 gap-4"></div>
+      <div id="recommendations" class="grid gap-3 mt-6"></div>
 
-          <div class="flex flex-col sm:flex-row gap-3 mt-8">
-            <a id="btnBook" href="#" target="_blank" rel="noopener" class="btn-primary text-center px-8 py-4 rounded-2xl text-lg">Book selected on WhatsApp</a>
-            <button type="button" id="btnStartOver" class="btn-ghost px-8 py-4 rounded-2xl font-bold">Start over</button>
-          </div>
-          <p class="text-gray-500 text-sm mt-3">Only the service names are sent to WhatsApp &mdash; never your photo.</p>
-        </div>
-      </div>
-    </div>
+      <a id="btnBook" href="#" target="_blank" rel="noopener" class="btn-primary block text-center mt-6 py-5 rounded-2xl text-xl">Book on WhatsApp</a>
+      <button type="button" id="btnStartOver" class="btn-ghost w-full mt-3 py-4 rounded-2xl font-bold">Try another photo</button>
+    </section>
 
-  </div>
-
-  <div class="max-w-7xl mx-auto px-6 pb-10 mt-16">
-    <div class="glass border border-yellow-500/30 rounded-3xl p-6 text-center text-gray-300 leading-relaxed">
-      <p class="text-lg">
-        ⚠️ <span class="font-bold">AI suggestions:</span>
-        These are cosmetic salon suggestions generated by AI from your photo and goals. They're optional and are not medical or dermatological advice. Our stylists will confirm what suits you in the salon.
-      </p>
-    </div>
   </div>
 
   <script src="face-analyser.js"></script>
